@@ -53,3 +53,6 @@ asyncio_mode = "auto"
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["data", "training", "evaluation", "serving"]
