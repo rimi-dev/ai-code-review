@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: review-bot
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ai_code_review
+    redis:
+      host: localhost
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.reviewer: DEBUG
+    org.springframework.data.mongodb: INFO
+    org.springframework.data.redis: INFO
