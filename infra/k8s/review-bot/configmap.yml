@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: review-bot-config
+  namespace: ai-code-review
+  labels:
+    app: review-bot
+    part-of: ai-code-review
+data:
+  SPRING_PROFILES_ACTIVE: "production"
+  SPRING_DATA_MONGODB_URI: "mongodb://mongodb.ai-code-review.svc.cluster.local:27017/review-bot"
+  SPRING_DATA_REDIS_HOST: "redis.ai-code-review.svc.cluster.local"
+  SPRING_DATA_REDIS_PORT: "6379"
+  VLLM_SERVER_URL: "http://vllm-server.ai-code-review.svc.cluster.local"
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_COM_AIREVIEW: "DEBUG"
+  SERVER_PORT: "8080"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"

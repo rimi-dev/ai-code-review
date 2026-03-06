@@ -1,0 +1,128 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_vllm:
+        description: "Deploy vLLM server"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  GHCR_REGISTRY: ghcr.io
+  REVIEW_BOT_IMAGE: ghcr.io/${{ github.repository }}/review-bot
+  VLLM_IMAGE: ghcr.io/${{ github.repository }}/vllm-server
+
+jobs:
+  deploy-review-bot:
+    name: Deploy Review Bot
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push review-bot image
+        uses: docker/build-push-action@v6
+        with:
+          context: review-bot
+          file: review-bot/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REVIEW_BOT_IMAGE }}:${{ github.sha }}
+            ${{ env.REVIEW_BOT_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Update Kubernetes deployment image
+        run: |
+          kubectl set image deployment/review-bot \
+            review-bot=${{ env.REVIEW_BOT_IMAGE }}:${{ github.sha }} \
+            -n ai-code-review
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f infra/k8s/review-bot/ -n ai-code-review
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/review-bot \
+            -n ai-code-review \
+            --timeout=300s
+
+  deploy-vllm:
+    name: Deploy vLLM Server
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy_vllm == true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push vLLM image
+        uses: docker/build-push-action@v6
+        with:
+          context: ml-pipeline
+          file: ml-pipeline/serving/Dockerfile
+          push: true
+          tags: |
+            ${{ env.VLLM_IMAGE }}:${{ github.sha }}
+            ${{ env.VLLM_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Update Kubernetes deployment image
+        run: |
+          kubectl set image deployment/vllm-server \
+            vllm-server=${{ env.VLLM_IMAGE }}:${{ github.sha }} \
+            -n ai-code-review
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f infra/k8s/vllm/ -n ai-code-review
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/vllm-server \
+            -n ai-code-review \
+            --timeout=600s

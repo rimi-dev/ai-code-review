@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-server
+  namespace: ai-code-review
+  labels:
+    app: vllm-server
+    part-of: ai-code-review
+spec:
+  type: ClusterIP
+  selector:
+    app: vllm-server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8000
