@@ -1,0 +1,106 @@
+# =============================================================================
+# QLoRA Fine-tuning Configuration for AI Code Review Bot
+# =============================================================================
+# Model: DeepSeek-Coder-V2-Lite-Instruct (16B parameters)
+# Method: QLoRA (4-bit quantized LoRA)
+# Task: Code review comment generation from diffs
+# =============================================================================
+
+# --- Base Model ---
+model:
+  name: "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct"
+  revision: "main"
+  trust_remote_code: true
+  torch_dtype: "bfloat16"
+
+# --- Quantization (BitsAndBytes 4-bit) ---
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: "bfloat16"
+
+# --- LoRA Configuration ---
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+# --- Training Hyperparameters ---
+training:
+  output_dir: "./output/checkpoints"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 8
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+  max_grad_norm: 0.3
+  bf16: true
+  fp16: false
+  gradient_checkpointing: true
+  gradient_checkpointing_kwargs:
+    use_reentrant: false
+  optim: "paged_adamw_32bit"
+  logging_steps: 10
+  save_steps: 100
+  save_total_limit: 3
+  eval_strategy: "steps"
+  eval_steps: 100
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  report_to: "mlflow"
+  dataloader_num_workers: 4
+  dataloader_pin_memory: true
+  remove_unused_columns: false
+  seed: 42
+  data_seed: 42
+
+# --- SFT (Supervised Fine-Tuning) ---
+sft:
+  max_seq_length: 4096
+  packing: false
+  dataset_text_field: "text"
+  neftune_noise_alpha: 5.0
+
+# --- Dataset ---
+dataset:
+  train_split: "train"
+  eval_split: "validation"
+  test_split: "test"
+
+# --- MLflow Tracking ---
+mlflow:
+  experiment_name: "ai-code-review-finetune"
+  tracking_uri: "http://localhost:5000"
+  run_name_prefix: "qlora-deepseek-coder"
+  log_model: false
+  tags:
+    project: "ai-code-review"
+    method: "qlora"
+    base_model: "deepseek-coder-v2-lite-instruct"
+
+# --- Early Stopping ---
+early_stopping:
+  patience: 3
+  threshold: 0.001
+
+# --- Adapter Saving & Merging ---
+adapter:
+  save_dir: "./output/adapter"
+  merged_dir: "./output/merged_model"
+  push_to_hub: false
+  hub_model_id: ""
