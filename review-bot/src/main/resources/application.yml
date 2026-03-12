@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: review-bot
+  jackson:
+    property-naming-strategy: SNAKE_CASE
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/ai-code-review}

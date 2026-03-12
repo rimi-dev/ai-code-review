@@ -24,3 +24,4 @@ logs/
 # Environment
 .env
 *.env.local
+*.kotlin
