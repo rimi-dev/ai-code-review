@@ -1,0 +1,12 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ai-code-review
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    com.reviewer: DEBUG
+    org.springframework.web.reactive: DEBUG

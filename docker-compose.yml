@@ -1,0 +1,17 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: review-bot-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: review-bot-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongodb_data:
