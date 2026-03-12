@@ -1,0 +1,47 @@
+groups:
+  - name: review-bot-alerts
+    rules:
+      - alert: CircuitBreakerOpen
+        expr: model_circuit_state > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.provider }} has been open for more than 1 minute."
+
+      - alert: HighFallbackRate
+        expr: rate(review_fallback_total[5m]) > 0.3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High fallback rate detected"
+          description: "Fallback rate is {{ $value }}/s over the last 5 minutes."
+
+      - alert: HighFailureRate
+        expr: rate(review_total{status="FAILED"}[5m]) / rate(review_total[5m]) > 0.2
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High review failure rate"
+          description: "Review failure rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: QueueDepthHigh
+        expr: queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Review queue depth is high"
+          description: "Queue depth is {{ $value }}, which exceeds the threshold of 100."
+
+      - alert: HighCost
+        expr: increase(review_cost_usd_total[1h]) > 50
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High hourly cost detected"
+          description: "Review cost in the last hour is ${{ $value }}, exceeding the $50 threshold."

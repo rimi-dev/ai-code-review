@@ -1,0 +1,61 @@
+{
+  "uid": "review-quality",
+  "title": "Review Quality",
+  "tags": ["review-bot", "quality"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Comments by Category",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (category) (increase(review_comments_total[7d]))",
+          "legendFormat": "{{ category }}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Comments by Severity",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (severity) (increase(review_comments_total[7d]))",
+          "legendFormat": "{{ severity }}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Average Comments per PR",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "increase(review_comments_total[1d]) / increase(review_total{status=\"COMPLETED\"}[1d])",
+          "legendFormat": "Avg Comments/PR"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 20
+          }
+        }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

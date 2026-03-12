@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: review-bot-config
+  namespace: review-bot
+data:
+  SPRING_DATA_MONGODB_URI: "mongodb://mongodb:27017/review-bot"
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SERVER_PORT: "8080"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,prometheus,info"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
