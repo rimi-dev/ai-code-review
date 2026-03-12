@@ -6,20 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class ReviewProperties(
     val maxDiffLines: Int = 3000,
     val maxFiles: Int = 50,
-    val excludePatterns: List<String> = listOf(
-        "*.lock",
-        "*.min.js",
-        "*.min.css",
-        "*.map",
-        "package-lock.json",
-        "yarn.lock",
-        "pnpm-lock.yaml",
-        "go.sum",
-        "*.pb.go",
-        "*.generated.*",
-    ),
-    val contextLines: Int = 3,
-    val streamKey: String = "review-queue",
-    val consumerGroup: String = "review-workers",
-    val consumerName: String = "worker-1",
+    val contextLines: Int = 5,
+    val excludePatterns: List<String> = emptyList(),
 )

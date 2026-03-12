@@ -5,13 +5,24 @@ import java.time.Duration
 
 @ConfigurationProperties(prefix = "review-bot.llm")
 data class LlmProperties(
-    val vllmBaseUrl: String = "http://localhost:8000",
-    val vllmModel: String = "default",
-    val vllmTimeout: Duration = Duration.ofSeconds(120),
-    val claudeBaseUrl: String = "https://api.anthropic.com",
-    val claudeApiKey: String = "",
-    val claudeModel: String = "claude-sonnet-4-20250514",
-    val claudeApiVersion: String = "2024-01-01",
-    val claudeTimeout: Duration = Duration.ofSeconds(60),
+    val defaultProvider: String = "claude",
     val maxTokens: Int = 4096,
+    val providers: Map<String, ProviderProperties> = emptyMap(),
 )
+
+data class ProviderProperties(
+    val enabled: Boolean = true,
+    val type: ProviderType,
+    val baseUrl: String,
+    val apiKey: String = "",
+    val model: String,
+    val timeout: Duration = Duration.ofSeconds(60),
+    val maxTokens: Int? = null,
+    val temperature: Double = 0.1,
+    val apiVersion: String? = null,
+    val fallbackTo: String? = null,
+)
+
+enum class ProviderType {
+    CLAUDE, OPENAI, GEMINI
+}

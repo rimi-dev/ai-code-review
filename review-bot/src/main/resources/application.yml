@@ -6,43 +6,60 @@ spring:
     name: review-bot
   data:
     mongodb:
-      uri: mongodb://localhost:27017/ai_code_review
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ai-code-review}
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 review-bot:
   github:
-    webhook-secret: ${GITHUB_WEBHOOK_SECRET:changeme}
-    app-id: ${GITHUB_APP_ID:0}
-    private-key-path: ${GITHUB_PRIVATE_KEY_PATH:/etc/secrets/github-app.pem}
+    webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+    app-id: ${GITHUB_APP_ID:}
+    private-key-path: ${GITHUB_PRIVATE_KEY_PATH:}
     api-base-url: ${GITHUB_API_BASE_URL:https://api.github.com}
   llm:
-    vllm-base-url: ${VLLM_BASE_URL:http://localhost:8000}
-    vllm-model: ${VLLM_MODEL:default}
-    vllm-timeout: ${VLLM_TIMEOUT:120s}
-    claude-base-url: ${CLAUDE_BASE_URL:https://api.anthropic.com}
-    claude-api-key: ${CLAUDE_API_KEY:}
-    claude-model: ${CLAUDE_MODEL:claude-sonnet-4-20250514}
-    claude-api-version: ${CLAUDE_API_VERSION:2024-01-01}
-    claude-timeout: ${CLAUDE_TIMEOUT:60s}
+    default-provider: ${LLM_DEFAULT_PROVIDER:claude}
     max-tokens: ${LLM_MAX_TOKENS:4096}
+    providers:
+      claude:
+        enabled: true
+        type: CLAUDE
+        base-url: ${CLAUDE_BASE_URL:https://api.anthropic.com}
+        api-key: ${CLAUDE_API_KEY:}
+        model: ${CLAUDE_MODEL:claude-sonnet-4-20250514}
+        api-version: "2024-01-01"
+        timeout: 60s
+        fallback-to: openai
+      openai:
+        enabled: true
+        type: OPENAI
+        base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+        api-key: ${OPENAI_API_KEY:}
+        model: ${OPENAI_MODEL:gpt-4o}
+        timeout: 60s
+        fallback-to: gemini
+      gemini:
+        enabled: false
+        type: GEMINI
+        base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
+        api-key: ${GEMINI_API_KEY:}
+        model: ${GEMINI_MODEL:gemini-2.0-flash}
+        timeout: 60s
   review:
     max-diff-lines: ${REVIEW_MAX_DIFF_LINES:3000}
     max-files: ${REVIEW_MAX_FILES:50}
+    context-lines: ${REVIEW_CONTEXT_LINES:5}
     exclude-patterns:
       - "*.lock"
       - "*.min.js"
       - "*.min.css"
-      - "*.map"
+      - "*.generated.*"
       - "package-lock.json"
       - "yarn.lock"
       - "pnpm-lock.yaml"
       - "go.sum"
-      - "*.pb.go"
-      - "*.generated.*"
-    context-lines: ${REVIEW_CONTEXT_LINES:3}
-    stream-key: ${REDIS_STREAM_KEY:review-queue}
+  redis-stream:
+    stream-key: ${REDIS_STREAM_KEY:review-requests}
     consumer-group: ${REDIS_CONSUMER_GROUP:review-workers}
     consumer-name: ${REDIS_CONSUMER_NAME:worker-1}
 
@@ -50,10 +67,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, prometheus, metrics
-  endpoint:
-    health:
-      show-details: always
+        include: health,info,prometheus,metrics
   metrics:
     tags:
       application: ${spring.application.name}
@@ -62,4 +76,4 @@ logging:
   level:
     com.reviewer: DEBUG
     org.springframework.data.mongodb: INFO
-    org.springframework.data.redis: INFO
+    org.springframework.web: INFO
